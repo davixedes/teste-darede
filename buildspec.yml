@@ -1,0 +1,22 @@
+version: 0.2
+
+phases:
+  install:
+    runtime-versions:
+      java: corretto11
+  pre_build:
+    commands:
+    - aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 504646716418.dkr.ecr.us-east-1.amazonaws.com
+    - echo Nothing to do in the pre_build phase...
+  build:
+    commands:
+      - docker build -t projeto-darede .
+      - echo Build started on `date`
+      - docker tag projeto-darede:latest 504646716418.dkr.ecr.us-east-1.amazonaws.com/projeto-darede:latest
+  post_build:
+    commands:
+      - docker push 504646716418.dkr.ecr.us-east-1.amazonaws.com/projeto-darede:latest
+      - echo Build completed on `date`
+artifacts:
+  files:
+    - target/messageUtil-1.0.jar
