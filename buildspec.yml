@@ -1,22 +1,24 @@
 version: 0.2
 
 phases:
-  install:
-    runtime-versions:
-      java: corretto11
   pre_build:
     commands:
+    - echo Logginng in to Amazon ECR   
+    - aws --version  
     - aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 504646716418.dkr.ecr.us-east-1.amazonaws.com
-    - echo Nothing to do in the pre_build phase...
+    - REPOSITORY_URI=504646716418.dkr.ecr.us-east-1.amazonaws.com/live1
+    - COMMIT_HASH=(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c 1-7
+    - IMAGE_TAG=build-$(echo $CODEBUILD_BUILD_ID | awk -F":" '{print $2}')
   build:
     commands:
       - docker build -t projeto-darede .
       - echo Build started on `date`
+      - docker build -t live1 .
       - docker tag projeto-darede:latest 504646716418.dkr.ecr.us-east-1.amazonaws.com/projeto-darede:latest
   post_build:
     commands:
+      - echo Pushing the Docker images...
       - docker push 504646716418.dkr.ecr.us-east-1.amazonaws.com/projeto-darede:latest
+      - echo Writing image definition file...
+      - print '[{"mame":"app", "imageuri":"%s"}]' $REPOSITORY_URI:$IMAGE_TAG > imagedefinition.json
       - echo Build completed on `date`
-artifacts:
-  files:
-    - target/messageUtil-1.0.jar
